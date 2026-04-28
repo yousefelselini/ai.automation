@@ -7,8 +7,9 @@ export async function GET() {
   const session = await getServerSession(authOptions);
   const userId = (session?.user as any)?.id;
   if (!userId) return NextResponse.json({}, { status: 401 });
-  const row = await prisma.onboardingProgress.findUnique({ where: { userId } });
-  return NextResponse.json(row || {});
+
+  const onboarding = await prisma.onboardingProgress.findUnique({ where: { userId } });
+  return NextResponse.json(onboarding ?? {});
 }
 
 export async function POST(req: Request) {
@@ -18,10 +19,10 @@ export async function POST(req: Request) {
 
   const data = await req.json();
   const allDone = [
-    Boolean(data.businessProfileSet),
-    Boolean(data.aiConfigured),
-    Boolean(data.channelConnected),
-    Boolean(data.paymentSubmitted)
+    data.businessProfileSet,
+    data.aiConfigured,
+    data.channelConnected,
+    data.paymentSubmitted
   ].every(Boolean);
 
   await prisma.onboardingProgress.upsert({
@@ -32,6 +33,8 @@ export async function POST(req: Request) {
       aiConfigured: Boolean(data.aiConfigured),
       channelConnected: Boolean(data.channelConnected),
       paymentSubmitted: Boolean(data.paymentSubmitted),
+      aiTested: Boolean(data.aiTested),
+      planChosen: Boolean(data.planChosen),
       completedAt: allDone ? new Date() : null
     },
     update: {
@@ -39,6 +42,8 @@ export async function POST(req: Request) {
       aiConfigured: Boolean(data.aiConfigured),
       channelConnected: Boolean(data.channelConnected),
       paymentSubmitted: Boolean(data.paymentSubmitted),
+      aiTested: Boolean(data.aiTested),
+      planChosen: Boolean(data.planChosen),
       completedAt: allDone ? new Date() : null
     }
   });
